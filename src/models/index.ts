@@ -1,6 +1,6 @@
-import ResourceExample from './ResourceExample.model';
+import ResourceUser from './ResourceUser.model';
 
 export {
   // eslint-disable-next-line import/prefer-default-export
-  ResourceExample,
+  ResourceUser,
 };

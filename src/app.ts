@@ -14,5 +14,4 @@ Database.connect();
 if (process.env.NODE_ENV !== 'test') {
   server.listen(() => logger.info(`🚀 App listening on the port ${PORT}`));
 }
-console.log(process.env.DB_URI)
 export default server;

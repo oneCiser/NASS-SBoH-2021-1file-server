@@ -1,6 +1,6 @@
-import ResourceExampleRepository from './ResourceExampleRepository';
+import ResourceUserRepository from './ResourceUserRepository';
 
 export {
   // eslint-disable-next-line import/prefer-default-export
-  ResourceExampleRepository,
+  ResourceUserRepository,
 };

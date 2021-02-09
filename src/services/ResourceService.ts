@@ -1,67 +1,67 @@
 /* eslint-disable class-methods-use-this */
-import { ICrud, IResourceExample } from '../interfaces';
-import { ResourceExampleRepository } from '../repository';
-import { ResourceExample } from '../models';
+import { ICrud, IUser } from '../interfaces';
+import { ResourceUserRepository } from '../repository';
+import { ResourceUser } from '../models';
 
 /**
  *
  * The resource service,layer of repository pattern
  * @category Services
  * @class ResourceService
- * @implements {ICrud<IResourceExample, string>}
+ * @implements {ICrud<IUser, string>}
  */
-class ResourceService implements ICrud<IResourceExample, string> {
+class ResourceService implements ICrud<IUser, string> {
   /**
    *
    * Create a resource
-   * @param {IResourceExample} resource - The resource to create
-   * @return {Promise<IResourceExample>}  A resource created
+   * @param {IUser} resource - The resource to create
+   * @return {Promise<IUser>}  A resource created
    * @memberof ResourceService
    */
-  async create(resource: IResourceExample): Promise<IResourceExample> {
-    return ResourceExampleRepository.create(resource);
+  async create(resource: IUser): Promise<IUser> {
+    return ResourceUserRepository.create(resource);
   }
 
   /**
    *
    * List all resources
-   * @return {Promise<Array<IResourceExample>>}  A list of tasks
+   * @return {Promise<Array<IUser>>}  A list of tasks
    * @memberof ResourceService
    */
-  async list(): Promise<Array<IResourceExample>> {
-    return ResourceExampleRepository.list();
+  async list(): Promise<Array<IUser>> {
+    return ResourceUserRepository.list();
   }
 
   /**
    *
    * Find by id a resource
    * @param {string} id - The id to find
-   * @return {Promise<IResourceExample>}  A resource
+   * @return {Promise<IUser>}  A resource
    * @memberof ResourceService
    */
-  async getById(id: string): Promise<IResourceExample | null> {
-    return ResourceExampleRepository.getById(id);
+  async getById(id: string): Promise<IUser | null> {
+    return ResourceUserRepository.getById(id);
   }
 
   /**
    *
    * Remove a resource
-   * @param {IResourceExample} resource - The resource to remove
-   * @return {Promise<IResourceExample>}  A resource removed
+   * @param {IUser} resource - The resource to remove
+   * @return {Promise<IUser>}  A resource removed
    * @memberof ResourceService
    */
-  async remove(resource: IResourceExample): Promise<IResourceExample> {
-    return ResourceExampleRepository.remove(resource);
+  async remove(resource: IUser): Promise<IUser> {
+    return ResourceUserRepository.remove(resource);
   }
 
   /**
    *
    * Remove by id a resource
    * @param {string} id - The id to find
-   * @return {Promise<IResourceExample>}  A resource removed
+   * @return {Promise<IUser>}  A resource removed
    * @memberof ResourceService
    */
-  async removeById(id: string): Promise<IResourceExample | null> {
+  async removeById(id: string): Promise<IUser | null> {
     const taskToDelete = await this.getById(id);
     if (taskToDelete) await taskToDelete.remove();
     return taskToDelete;
@@ -70,27 +70,27 @@ class ResourceService implements ICrud<IResourceExample, string> {
   /**
    *
    * Update a resource
-   * @param {IResourceExample} resource - The resource to updated
-   * @return {Promise<IResourceExample>}  A resource updated
+   * @param {IUser} resource - The resource to updated
+   * @return {Promise<IUser>}  A resource updated
    * @memberof ResourceService
    */
-  async update(resource: IResourceExample): Promise<IResourceExample> {
-    return ResourceExampleRepository.update(resource);
+  async update(resource: IUser): Promise<IUser> {
+    return ResourceUserRepository.update(resource);
   }
 
   /**
    *
    * Update by id a resource
    * @param {string} id - The id to find
-   * @param {IResourceExample} resource - The resource to updated
-   * @return {Promise<IResourceExample>} A resource updated
+   * @param {IUser} resource - The resource to updated
+   * @return {Promise<IUser>} A resource updated
    * @memberof ResourceService
    */
-  async updateById(id: string, body: Object): Promise<IResourceExample | null > {
+  async updateById(id: string, body: Object): Promise<IUser | null > {
     // eslint-disable-next-line no-unused-vars
-    return new Promise<IResourceExample | null>((resolve, _) => {
-      ResourceExample.findOneAndUpdate({ _id: id }, { ...body }, { new: true },
-        (error, task: IResourceExample | null) => resolve(task));
+    return new Promise<IUser | null>((resolve, _) => {
+      ResourceUser.findOneAndUpdate({ _id: id }, { ...body }, { new: true },
+        (error, task: IUser | null) => resolve(task));
     });
   }
 }
