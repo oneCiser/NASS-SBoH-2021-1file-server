@@ -1,4 +1,5 @@
 import { Document } from 'mongoose';
+import IFile from './IFile';
 
 /**
  * Define a interface of resource to managament with mongoose
@@ -7,12 +8,14 @@ import { Document } from 'mongoose';
  * @extends {Document}
  */
 interface IUser extends Document{
-    user: { type: String, required: true },
-    password: {type: String, required:true},
-    type_user:{type:String, required:true},
-    maxsize: {type:Number,required:true},
-    directory: {type:[],required:false},
-    share_out: {type:[],required:false},
-    share_in: {type:[],required:false}
+    username: String,
+    password: String,
+    email: String,
+    type_user: String,
+    maxsize: Number,
+    directory: Array<IFile>,
+    share_out: Array<any>,
+    share_in: Array<any>,
+    haveSpace: Function
 }
 export default IUser;

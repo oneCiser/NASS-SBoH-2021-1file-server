@@ -4,6 +4,8 @@ import morgan from 'morgan';
 import router from '../routes';
 import errorHandler from '../exceptions/errorHandler';
 import { stream } from '../utils';
+import passport from 'passport';
+import jwtStrategy from '../passport/jwtStrategy';
 
 /**
  *
@@ -37,6 +39,7 @@ class Server {
   constructor(private port: number) {
     this.app = express();
     this.env = process.env.NODE_ENV || 'development';
+    this.initizalizaePassport();
     this.initializeMiddlewares();
     this.initializeRoutes();
     this.initializeErrorHandling();
@@ -82,6 +85,18 @@ class Server {
     this.app.use(express.json());
     this.app.use(router);
   }
+
+   /**
+   *
+   * Initialize of passport
+   * @private
+   * @memberof Server
+   */
+    private initizalizaePassport(){
+      this.app.use(passport.initialize())
+      passport.use(jwtStrategy);
+  
+    }
 
   /**
    *

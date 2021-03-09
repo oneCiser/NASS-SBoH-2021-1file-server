@@ -1,6 +1,7 @@
 import {
   NextFunction, Request, Response, Router,
 } from 'express';
+import passport from 'passport';
 import { IRoute } from '../interfaces';
 import { ResourceUserControler } from '../controller';
 import { isDefinedParamMiddleware, validationMiddleware } from '../middlewares';
@@ -23,33 +24,48 @@ class ExampleRouter implements IRoute {
   }
 
   createRoutes(): void {
-    this.router.get(
-      this.pathIdParam,
-      isDefinedParamMiddleware(),
-      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
-        .getById(req, res, next),
-    );
-    this.router.get('/', (req: Request, res: Response, next: NextFunction) => ResourceUserControler
-      .list(req, res, next));
     this.router.post(
-      '/',
-      validationMiddleware(UserDTO),
+      '/upload',
+      passport.authenticate('jwt',{session:false}),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
-        .create(req, res, next),
+        .uploadFile(req, res, next),
     );
-    this.router.put(
-      this.pathIdParam,
-      isDefinedParamMiddleware(),
-      validationMiddleware(UserDTO, true),
+
+    this.router.post(
+      '/move',
+      passport.authenticate('jwt',{session:false}),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
-        .updateById(req, res, next),
+        .moveFile(req, res, next)
     );
-    this.router.delete(
-      this.pathIdParam,
-      isDefinedParamMiddleware(),
+
+    this.router.get(
+      '/files',
+      passport.authenticate('jwt',{session:false}),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
-        .removeById(req, res, next),
+        .getAllFiles(req, res, next)
     );
+
+    this.router.post(
+      '/remove',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+        .removeFileById(req, res, next)
+    );
+
+    this.router.get(
+      `/download${this.pathIdParam}`,
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+        .downloadFile(req, res, next)
+    )
+
+    this.router.get(
+      '/images',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+        .getImages(req, res, next)
+    );
+    
   }
 }
 export default new ExampleRouter().router;

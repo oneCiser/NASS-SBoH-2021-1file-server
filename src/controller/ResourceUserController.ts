@@ -1,10 +1,16 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable class-methods-use-this */
-import { NextFunction, Response, Request } from 'express';
-import { IUser } from '../interfaces';
+import { NextFunction, Response, Request, json } from 'express';
+import { IUser, IFile, IUploadFile, IPayLoad } from '../interfaces';
 import { ResourceUser } from '../models';
 import { HttpException } from '../exceptions';
 import { ResourceService } from '../services';
+import {uploadFileMiddleware} from '../middlewares';
+import fs from 'fs';
+import {findInArray} from '../utils';
+import '../config/dotenv';
+import { error } from 'winston';
+
 
 /**
  *
@@ -15,108 +21,210 @@ import { ResourceService } from '../services';
 class ResourceUserController {
   /**
    *
-   * List all resources
+   * Upload file
    * @static
    * @param {Request} req - The request
    * @param {Response} res - The response
    * @param {NextFunction} next - The next middleware in queue
-   * @return {JSON} - A list of resources
+   * @return {JSON} - return file upload
    * @memberof ResourceUserController
    */
-  public static async list(req: Request, res: Response, next: NextFunction) {
+  public static async uploadFile(req: Request, res: Response, next: NextFunction) {
     try {
-      const resources: Array<IUser> = await ResourceService.list();
-      res.json(resources);
+      
+      await uploadFileMiddleware(req, res);
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      console.log(req.file)
+      const newFile:IFile = req.body;
+      const tmpPath = req.file.destination;
+      const {filename} = req.file;
+      newFile.name = filename;
+      newFile.size = req.file.size;
+      const ifExistFile = findInArray(user.directory,newFile);
+      let haveSpace = false;
+      if(ifExistFile>-1){
+        const getExistFile = user.directory[ifExistFile];
+        haveSpace = user.haveSpace(Math.abs(newFile.size - getExistFile.size));
+      }
+      else{
+        haveSpace = user.haveSpace(newFile.size);
+      }
+      if(!haveSpace){
+        fs.unlinkSync(`${tmpPath}${filename}`);
+        throw new HttpException(400, 'Bad Request');
+      }
+      const realPath = `${process.env.FILE_STORAGE}/${user._id}/${newFile.url}/`;
+      const pathExist = fs.existsSync(realPath);
+      if(!pathExist) fs.mkdirSync(realPath , {recursive:true});
+      fs.rename(`${tmpPath}${filename}`,`${realPath}${filename}`,(error) => {
+        if(error) throw new HttpException(400, 'Bad Request');
+      });
+      if(!newFile) throw new HttpException(400, 'Bad Request');
+      const saveFile = await ResourceService.uploadFile(<string>user.username,newFile);
+      if(!saveFile) {
+        fs.unlinkSync(`${realPath}${filename}`);
+        throw new HttpException(404, 'Not Found');
+      }
+      res.json(newFile);
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  /**
+   * @static
+   * @param {Request} req 
+   * @param {Response} res 
+   * @param {NextFunction} next 
+   * @returns {JSON} return file
+   * @memberof ResourceUserController
+   */
+  public static async moveFile(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const fileToMove = <IFile>req.body;
+      const oldFile = await ResourceService.getFileById(user._id,fileToMove._id);
+      if(!oldFile) throw new HttpException(404, 'Not Found');
+      const oldPaht = `${process.env.FILE_STORAGE}/${user._id}/${oldFile.url}/${oldFile.name}`;
+      const newPath = `${process.env.FILE_STORAGE}/${user._id}/${fileToMove.url}/`;
+      const pathExist = fs.existsSync(newPath);
+      
+      const moveFile = await ResourceService.updateExistFile(user, fileToMove);
+      if(!moveFile) throw new HttpException(404, 'Not Found');
+      if(!pathExist) fs.mkdirSync(newPath , {recursive:true});
+      fs.rename(oldPaht,`${newPath}${fileToMove.name}`,(error) => {
+        if(error) throw new HttpException(400, 'Bad Request');
+      });
+      res.json(moveFile);
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+
+    
+  }
+  /**
+   * @static
+   * @param {Request} req 
+   * @param {Response} res 
+   * @param {NextFunction} next 
+   * @returns {JSON} return file
+   * @memberof ResourceUserController
+   */
+  public static async getAllFiles(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const files = await ResourceService.getFiles(user._id);
+      if(!files) throw new HttpException(404, 'Not Found');
+      res.json({files});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  /**
+   * @static
+   * @param {Request} req 
+   * @param {Response} res 
+   * @param {NextFunction} next 
+   * @returns {JSON} return file
+   * @memberof ResourceUserController
+   */
+  public static async removeFileById(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const file = <IFile>req.body;
+      const existFile = await ResourceService.getFileById(user._id, file._id);
+      const remove = await ResourceService.removeFileById(user._id, file._id);
+      
+      if(existFile && remove){
+        const path = `${process.env.FILE_STORAGE}/${user._id}/${existFile.url}/${existFile.name}`;
+        const existPath = fs.existsSync(path);
+        if(!existPath ) throw new HttpException(404, 'Not Found');
+        fs.unlink(path,(error) => {
+          if(error) throw new HttpException(404, 'Not Found');
+        });
+        res.json(existFile);
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+      
+      
     } catch (error) {
       return next(new HttpException(error.status || 500, error.message));
     }
   }
 
   /**
-   *
-   * create a new resource
    * @static
-   * @param {Request} req - The request
-   * @param {Response} res - The response
-   * @param {NextFunction} next - The next middleware in queue
-   * @return {JSON} - A resource creted
+   * @param {Request} req 
+   * @param {Response} res 
+   * @param {NextFunction} next 
+   * @returns {JSON} return file
    * @memberof ResourceUserController
    */
-  public static async create(req: Request, res: Response, next: NextFunction) {
+
+  public static async downloadFile(req: Request, res: Response, next: NextFunction){
     try {
-      const property = req.body;
-      const resource:IUser = new ResourceUser(property);
-      const resourceSaved: IUser = await ResourceService.create(resource);
-      res.json(resourceSaved);
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const id = req.params.id;
+      
+      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+      console.log(fullUrl)
+      const getFile = await ResourceService.getFileById(user._id, id);
+      if(getFile){
+        const path = `${process.env.FILE_STORAGE}/${user._id}/${getFile.url}/${getFile.name}`;
+        res.download(path, getFile.name, (error) => {
+          if(error) throw new HttpException(404, 'Not Found');
+        });
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+    
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+    
+    
+  }
+
+  public static async getImages(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const files = await ResourceService.getFiles(user._id);
+      if(files){
+        const str = '^(?!(index|page1)\.html$).*\.(htm|html|js|css|svg|png)$';
+        const regex = new RegExp(str,'g');
+        const arrayFiles = files.filter(images => {
+          if(regex.test(images.name)){
+            return images
+          }
+          
+        });
+        const images = arrayFiles.map(image => {
+          return {
+            name:image.name,
+            modified:image.modified,
+            url:req.protocol + '://' + req.get('host') + '/api/file/download/'+image._id
+          };
+        });
+        res.json({images});
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
     } catch (error) {
       return next(new HttpException(error.status || 500, error.message));
     }
   }
 
-  /**
-   *
-   * Get resource by id
-   * @static
-   * @param {Request} req - The request
-   * @param {Response} res - The response
-   * @param {NextFunction} next - The next middleware in queue
-   * @return {JSON} - A list of resources
-   * @memberof ResourceUserController
-   */
-  public static async getById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      const resource: IUser | null = await ResourceService.getById(id);
-      if (!resource) throw new HttpException(404, 'Resource not found');
-      res.json(resource);
-    } catch (error) {
-      return next(new HttpException(error.status || 500, error.message));
-    }
-  }
 
-  /**
-   *
-   * Remove tasresource by id
-   * @static
-   * @param {Request} req - The request
-   * @param {Response} res - The response
-   * @param {NextFunction} next - The next middleware in queue
-   * @return {JSON} - A list of resourceS
-   * @memberof ResourceUserController
-   */
-  public static async removeById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      const resource: IUser | null = await ResourceService
-        .removeById(id);
-      if (!resource) throw new HttpException(404, 'Resource not found');
-      res.json(resource);
-    } catch (error) {
-      return next(new HttpException(error.status || 500, error.message));
-    }
-  }
 
-  /**
-   *
-   * Update resource by id
-   * @static
-   * @param {Request} req - The request
-   * @param {Response} res - The response
-   * @param {NextFunction} next - The next middleware in queue
-   * @return {JSON} - A list of resourceS
-   * @memberof ResourceUserController
-   */
-  public static async updateById(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { id } = req.params;
-      const { property } = req.body;
-      const resourceUpdated: IUser | null = await ResourceService
-        .updateById(id, { property });
-      if (!resourceUpdated) throw new HttpException(404, 'resource not found');
-      res.json(resourceUpdated);
-    } catch (error) {
-      return next(new HttpException(error.status || 500, error.message));
-    }
-  }
+  
 }
 export default ResourceUserController;
