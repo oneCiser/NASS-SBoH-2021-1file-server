@@ -54,7 +54,7 @@ class ResourceUserController {
         fs.unlinkSync(`${tmpPath}${filename}`);
         throw new HttpException(400, 'Bad Request');
       }
-      const realPath = `${process.env.FILE_STORAGE}/${user._id}/${newFile.url}/`;
+      const realPath = `${process.env.FILE_STORAGE}/users/${user._id}/${newFile.url}/`;
       const pathExist = fs.existsSync(realPath);
       if(!pathExist) fs.mkdirSync(realPath , {recursive:true});
       fs.rename(`${tmpPath}${filename}`,`${realPath}${filename}`,(error) => {
@@ -86,8 +86,8 @@ class ResourceUserController {
       const fileToMove = <IFile>req.body;
       const oldFile = await ResourceService.getFileById(user._id,fileToMove._id);
       if(!oldFile) throw new HttpException(404, 'Not Found');
-      const oldPaht = `${process.env.FILE_STORAGE}/${user._id}/${oldFile.url}/${oldFile.name}`;
-      const newPath = `${process.env.FILE_STORAGE}/${user._id}/${fileToMove.url}/`;
+      const oldPaht = `${process.env.FILE_STORAGE}/users/${user._id}/${oldFile.url}/${oldFile.name}`;
+      const newPath = `${process.env.FILE_STORAGE}/users/${user._id}/${fileToMove.url}/`;
       const pathExist = fs.existsSync(newPath);
       
       const moveFile = await ResourceService.updateExistFile(user, fileToMove);
@@ -139,7 +139,7 @@ class ResourceUserController {
       const remove = await ResourceService.removeFileById(user._id, file._id);
       
       if(existFile && remove){
-        const path = `${process.env.FILE_STORAGE}/${user._id}/${existFile.url}/${existFile.name}`;
+        const path = `${process.env.FILE_STORAGE}/users/${user._id}/${existFile.url}/${existFile.name}`;
         const existPath = fs.existsSync(path);
         if(!existPath ) throw new HttpException(404, 'Not Found');
         fs.unlink(path,(error) => {
@@ -176,7 +176,7 @@ class ResourceUserController {
       console.log(fullUrl)
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
-        const path = `${process.env.FILE_STORAGE}/${user._id}/${getFile.url}/${getFile.name}`;
+        const path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
         res.download(path, getFile.name, (error) => {
           if(error) throw new HttpException(404, 'Not Found');
         });
