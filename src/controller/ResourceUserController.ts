@@ -30,12 +30,12 @@ class ResourceUserController {
    * @memberof ResourceUserController
    */
   public static async uploadFile(req: Request, res: Response, next: NextFunction) {
+    
     try {
       
       await uploadFileMiddleware(req, res);
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
-      console.log(req.file)
       const newFile:IFile = req.body;
       const tmpPath = req.file.destination;
       const {filename} = req.file;
@@ -173,7 +173,6 @@ class ResourceUserController {
       const id = req.params.id;
       
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-      console.log(fullUrl)
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
         const path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
@@ -210,7 +209,7 @@ class ResourceUserController {
           return {
             name:image.name,
             modified:image.modified,
-            url:req.protocol + '://' + req.get('host') + '/api/file/download/'+image._id
+            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/download/'+image._id
           };
         });
         res.json({images});

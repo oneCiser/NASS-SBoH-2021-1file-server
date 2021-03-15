@@ -26,6 +26,7 @@ class ExampleRouter implements IRoute {
   createRoutes(): void {
     this.router.post(
       '/upload',
+      (req: Request, res: Response, next: NextFunction) => {console.log(req);next()},
       passport.authenticate('jwt',{session:false}),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
         .uploadFile(req, res, next),
@@ -57,7 +58,7 @@ class ExampleRouter implements IRoute {
       passport.authenticate('jwt',{session:false}),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
         .downloadFile(req, res, next)
-    )
+    );
 
     this.router.get(
       '/images',
