@@ -7,9 +7,11 @@ import { HttpException } from '../exceptions';
 import { ResourceService } from '../services';
 import {uploadFileMiddleware} from '../middlewares';
 import fs from 'fs';
+import archiver from 'archiver';
 import {findInArray} from '../utils';
 import '../config/dotenv';
 import { error } from 'winston';
+import { compile } from 'morgan';
 
 
 /**
@@ -221,6 +223,66 @@ class ResourceUserController {
       return next(new HttpException(error.status || 500, error.message));
     }
   }
+
+  public static async downloadFolder(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {folder} = req.body
+      var archive = archiver('zip');
+      archive.on('error', function(err) {
+        throw new HttpException(500, 'Internal error');
+      });
+      archive.on('end', () => res.end());
+      var path = process.env.FILE_STORAGE+"/users/"+user._id+"/"+folder;
+      res.attachment(`${folder}.zip`).type('zip');
+      var existFolder = fs.existsSync(path);
+      if(!existFolder) throw new HttpException(404, 'Not Found');
+      archive.directory(path,false);
+      archive.pipe(res);
+      archive.finalize();
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+
+  public static async removeFolder(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {folder} = req.body
+      var path = process.env.FILE_STORAGE+"/users/"+user._id+"/"+folder;
+      var existFolder = fs.existsSync(path);
+      if(!existFolder) throw new HttpException(404, 'Not Found');
+      var removed = await ResourceService.removeFolder(user._id,folder);
+      if (!removed) throw new HttpException(404, 'Not Found');
+      fs.rmdirSync(path,{ recursive: true });
+      res.json({removed});
+    
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+
+  public static async changeNameFolder(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {oldFolder, newFolder} = req.body;
+      var oldPath = process.env.FILE_STORAGE+"/users/"+user._id+"/"+oldFolder;
+      var newPath = process.env.FILE_STORAGE+"/users/"+user._id+"/"+newFolder;
+      var existFolder = fs.existsSync(oldPath);
+      if(!existFolder) throw new HttpException(404, 'Not Found');
+      var changed = await ResourceService.renameFolder(user._id, oldFolder, newFolder);
+      if(!changed) throw new HttpException(404, 'Not Found');
+      fs.renameSync(oldPath, newPath);
+      res.json({changed});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+
+
 
 
 

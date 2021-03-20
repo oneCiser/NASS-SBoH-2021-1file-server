@@ -88,6 +88,12 @@ class ResourceService  {
     return await ResourceUserRepository.removeFileById(_idUser, _idFile);
   }
   
+  async removeFolder(_idUser:string, folder:string): Promise<boolean>{
+    return await ResourceUserRepository.removeFolder(_idUser, folder);
+  }
+  async renameFolder(_idUser:string, oldFolder:string, newFolder:string): Promise<boolean>{
+    return await ResourceUserRepository.renameFolder(_idUser, oldFolder, newFolder);
+  }
   
 }
 

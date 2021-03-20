@@ -66,6 +66,27 @@ class ExampleRouter implements IRoute {
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
         .getImages(req, res, next)
     );
+
+    this.router.post(
+      '/folder',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+        .downloadFolder(req, res, next)
+    );
+
+    this.router.delete(
+      '/folder',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+       .removeFolder(req, res, next)
+    );
+
+    this.router.put(
+      '/folder',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+       .changeNameFolder(req, res, next)
+    )
     
   }
 }

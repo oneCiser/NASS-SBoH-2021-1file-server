@@ -124,5 +124,39 @@ class ResourceUserRepository{
       }
       return false;
     }
+
+    async removeFolder(_idUser:string, folder:string): Promise<boolean>{
+      const user = await ResourceUser.findById(_idUser);
+      if(user){
+        await ResourceUser.findByIdAndUpdate(_idUser, {
+          $pull:{
+            directory:{url:{
+              $regex:`^${folder}`, $options:'i'
+            }}
+          }
+        }, { multi: true });
+        return true;
+      }
+      return false;
+    }
+
+    async renameFolder(_idUser:string, oldFolder:string, newFolder:string): Promise<boolean> {
+      var user = await ResourceUser.findById(_idUser);
+      var regex = new RegExp(`^${oldFolder}`,'i');
+      if(user){
+        user.directory.forEach((file) => {
+          if(file.url.match(regex)){
+            
+            file.url = file.url.replace(oldFolder, newFolder);
+          }
+        });
+        var update = await ResourceUser.findByIdAndUpdate(_idUser,{
+          directory:user.directory
+        },{multi: true });
+        if(!update) return false;
+        return true;
+      }
+      return false;
+    }
 }
 export default new ResourceUserRepository();
