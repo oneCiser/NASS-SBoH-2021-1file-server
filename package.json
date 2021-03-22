@@ -9,7 +9,7 @@
     "dev": "cross-env NODE_ENV=development nodemon dist/src/app.js",
     "build": "tsc",
     "start": "npm run build && cross-env NODE_ENV=production node dist/src/app.js",
-    "pm2":"cross-env NODE_ENV=production pm2 start dist/src/app.js --watch -i max",
+    "pm2":"cross-env NODE_ENV=production pm2 start dist/src/app.js --watch -i max --name file-server",
     "jsdoc": "jsdoc -c jsdoc.json",
     "lint": "eslint --ext .ts",
     "lint:fix": "eslint --fix --ext .ts"
