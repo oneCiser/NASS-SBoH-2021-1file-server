@@ -9,6 +9,7 @@ import { Document } from 'mongoose';
     name:string,
     url:string,
     size:number,
-    modified:Date
+    modified:Date,
+    share:[]
 }
 export default IFile;
