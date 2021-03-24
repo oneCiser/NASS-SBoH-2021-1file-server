@@ -226,7 +226,7 @@ class ResourceUserController {
       const user = <IUser>token.user;
       const files = await ResourceService.getFiles(user._id);
       if(files){
-        const str = '^(?!(index|page1)\.html$).*\.(htm|html|js|css|svg|png)$';
+        const str = '^(?!(index|page1)\.html$).*\.(htm|html|js|css|svg|png|jpg|gif)$';
         const regex = new RegExp(str,'g');
         const arrayFiles = files.filter(images => {
           if(regex.test(images.name)){
