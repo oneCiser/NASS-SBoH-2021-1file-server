@@ -204,6 +204,8 @@ class ResourceUserController {
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
         const pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
+        var imgType = getFile.name.split('.');
+        res.type(imgType[imgType.length - 1])
         var file = fs.createReadStream(pathImg,{encoding: 'base64'})
         // var absolutePath = path.resolve(pathImg);
         // res.sendFile(absolutePath);
