@@ -7,6 +7,7 @@ import { HttpException } from '../exceptions';
 import { ResourceService } from '../services';
 import {uploadFileMiddleware} from '../middlewares';
 import fs from 'fs';
+import path from 'path';
 import archiver from 'archiver';
 import {findInArray} from '../utils';
 import '../config/dotenv';
@@ -202,8 +203,9 @@ class ResourceUserController {
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
-        const path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
-        res.sendFile(path);
+        const pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
+        var absolutePath = path.resolve(pathImg);
+        res.sendFile(absolutePath);
       }
       else{
         throw new HttpException(404, 'Not Found');
