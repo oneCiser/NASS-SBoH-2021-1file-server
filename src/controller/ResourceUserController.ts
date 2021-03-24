@@ -204,8 +204,10 @@ class ResourceUserController {
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
         const pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
-        var absolutePath = path.resolve(pathImg);
-        res.sendFile(absolutePath);
+        var file = fs.createReadStream(pathImg,{encoding: 'base64'})
+        // var absolutePath = path.resolve(pathImg);
+        // res.sendFile(absolutePath);
+        file.pipe(res);
       }
       else{
         throw new HttpException(404, 'Not Found');
