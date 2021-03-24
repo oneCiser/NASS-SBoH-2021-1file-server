@@ -193,6 +193,29 @@ class ResourceUserController {
     
   }
 
+  public static async getImg(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const id = req.params.id;
+      
+      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+      const getFile = await ResourceService.getFileById(user._id, id);
+      if(getFile){
+        const path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
+        res.sendFile(path);
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+    
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+    
+    
+  }
+
   public static async getImages(req: Request, res: Response, next: NextFunction){
     try {
       const token = <IPayLoad>req.user;
@@ -211,7 +234,7 @@ class ResourceUserController {
           return {
             name:image.name,
             modified:image.modified,
-            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/download/'+image._id
+            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/img/'+image._id
           };
         });
         res.json({images});

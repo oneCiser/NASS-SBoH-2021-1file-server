@@ -59,6 +59,12 @@ class ExampleRouter implements IRoute {
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
         .downloadFile(req, res, next)
     );
+    this.router.get(
+      `/img${this.pathIdParam}`,
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+        .getImg(req, res, next)
+    )
 
     this.router.get(
       '/images',
