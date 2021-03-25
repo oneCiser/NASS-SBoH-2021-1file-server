@@ -227,15 +227,19 @@ class ResourceUserController {
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
       const files = await ResourceService.getFiles(user._id);
+      const str = /^.*\.(htm|html|js|css|svg|png|jpg|gif)$/;
       if(files){
-        const str = '\.(htm|html|js|css|svg|png|jpg|gif)$';
-        const regex = new RegExp(str,'g');
+        
+        
         const arrayFiles = files.filter(images => {
-          if(regex.test(images.name)){
+          let match = str.test(images.name);
+          if(match){
+            
             return images
           }
           
         });
+        
         const images = arrayFiles.map(image => {
           return {
             name:image.name,
