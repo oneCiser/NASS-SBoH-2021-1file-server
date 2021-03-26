@@ -64,11 +64,13 @@ class ResourceUserController {
         if(error) throw new HttpException(400, 'Bad Request');
       });
       if(!newFile) throw new HttpException(400, 'Bad Request');
+      newFile.modified = new Date(Date.now());
       const saveFile = await ResourceService.uploadFile(<string>user.username,newFile);
       if(!saveFile) {
         fs.unlinkSync(`${realPath}${filename}`);
         throw new HttpException(404, 'Not Found');
       }
+      console.log(saveFile)
       res.json(saveFile);
     } catch (error) {
       return next(new HttpException(error.status || 500, error.message));
