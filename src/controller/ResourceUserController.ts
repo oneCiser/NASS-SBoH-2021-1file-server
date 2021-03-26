@@ -69,7 +69,7 @@ class ResourceUserController {
         fs.unlinkSync(`${realPath}${filename}`);
         throw new HttpException(404, 'Not Found');
       }
-      res.json(newFile);
+      res.json(saveFile);
     } catch (error) {
       return next(new HttpException(error.status || 500, error.message));
     }
