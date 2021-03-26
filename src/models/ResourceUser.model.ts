@@ -1,5 +1,5 @@
 import mongoose, { Model, Schema } from 'mongoose';
-import { IUser,IFile } from '../interfaces';
+import { IUser,IFile, IShare } from '../interfaces';
 
 const FileSchema: Schema<IFile> = new Schema({
   name: {type:String, required:true},
@@ -17,7 +17,7 @@ const ResourceUserSchema: Schema<IUser> = new Schema({
   type_user:{type:String, required:true},
   maxsize: {type:Number,required:true},
   directory: {type:[FileSchema],required:false},
-  share_in: {type:[],required:false}
+  share_in: {type:[String],required:false}
 });
 
 

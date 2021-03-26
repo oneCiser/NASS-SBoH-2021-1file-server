@@ -317,6 +317,62 @@ class ResourceUserController {
     }
   }
 
+  public static async shareFile(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {user_id, id_file, write} = req.body;
+      const shared = await ResourceService.shareFile(user._id, user_id, id_file, write);
+      res.json({shared});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async unShareFile(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {user_id, id_file} = req.body;
+      const unShared = await ResourceService.unShareFile(user._id, user_id, id_file);
+      res.json({unShared});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async shareFolder(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {user_id, files, write} = req.body;
+      const shared = await ResourceService.shareFolder(user._id, user_id, files, write);
+      res.json({shared});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async unShareFolder(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const {user_id, files} = req.body;
+      const unShared = await ResourceService.unShareFolder(user._id, user_id, files);
+      res.json({unShared});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async getUsersToShare(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const users = ResourceService.getUsersToShare(user._id);
+      if(!users) throw new HttpException(404, 'Not Found');
+      res.json({users});
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+
 
 
 

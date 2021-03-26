@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-unused-vars */
 /* eslint-disable class-methods-use-this */
-import { IFile, IUser } from '../interfaces';
+import { IFile, IUser, IShare, IAccessUser } from '../interfaces';
 import { ResourceUser } from '../models';
 
 /**
@@ -158,5 +158,120 @@ class ResourceUserRepository{
       }
       return false;
     }
+    async shareFile(_idUser_out: string, _idUser_in: string, _idFile:string, write:boolean): Promise<boolean> {
+      var user = await ResourceUser.findById(_idUser_out);
+      var userShared = await ResourceUser.findById(_idUser_in);
+      
+      if(user && userShared){
+        var files = user.directory.filter((file) => {
+          if(file._id == _idFile){
+            return file
+          }
+        })
+        if(files.length > 0){
+          var share = files[0].share;
+          var shared = false;
+          share.forEach(element => {
+            if(element.user_id == _idUser_in){
+              element.write = write;
+              shared = true;
+            };
+          });
+          if(!shared) {
+            share.push({
+              user_id:_idUser_in,
+              write:write
+            });
+            await ResourceUser.findOneAndUpdate( {
+              _id:_idUser_in,
+              share_in:{$ne:_idUser_out}
+            },{
+              $push:{
+                share_in:_idUser_out
+              }
+            }, { multi: true });
+          }
+          await ResourceUser.findOneAndUpdate({
+            _id:user._id,
+            directory:{$elemMatch:{_id:_idFile}}
+          },{
+            $set:{
+              "directory.$.share": share
+            }
+          }, { multi: true });
+
+          return true;
+
+        }
+        return false;
+
+      }
+      return false;
+    }
+    async unShareFile(_idUser_out: string, _idUser_in: string, _idFile:string): Promise<boolean> {
+      var user = await ResourceUser.findById(_idUser_out);
+      var userShared = await ResourceUser.findById(_idUser_in);
+      
+      if(user && userShared){
+        var haveAnotherSharedFile = user.directory.find(file => {
+          if(file._id == _idFile) return null;
+          var find = file.share.find(element => {
+            if(element.user_id == _idUser_in) return element;
+          })
+          if(find) return file;
+          return null;
+        })
+        var files = user.directory.filter((file) => {
+          if(file._id == _idFile){
+            return file
+          }
+        })
+        if(files.length > 0){
+          var share = files[0].share.filter(element => {
+            if(element.user_id != _idUser_in) return element
+          });
+          console.log(haveAnotherSharedFile)
+          if(!haveAnotherSharedFile){
+            await ResourceUser.findByIdAndUpdate( _idUser_in,{
+              $pull:{
+                share_in:{
+                  $in:[_idUser_out]
+                }
+              }
+            }, { multi: true });
+          }
+
+          
+          await ResourceUser.findOneAndUpdate({
+            _id:user._id,
+            directory:{$elemMatch:{_id:_idFile}}
+          },{
+            $set:{
+              "directory.$.share": share
+            }
+          }, { multi: true });
+
+          return true;
+
+        }
+        return false;
+
+      }
+      return false;
+    }
+    async getUsersToShare(_idUser:string): Promise<IAccessUser[]> {
+      const users = await ResourceUser.find({_id:{$ne:_idUser},type_user:'CLIENT'});
+      const usersToShare = users.map(user => {
+        return {
+          username:<string>user.username,
+          _id:user._id
+        }
+      });
+      return usersToShare;
+    }
+
+    // async getSharedFiles(_idUser:string): Promise<IFile[] | null>{
+      
+    // }
 }
 export default new ResourceUserRepository();

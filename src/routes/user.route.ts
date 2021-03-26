@@ -93,6 +93,36 @@ class ExampleRouter implements IRoute {
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
        .changeNameFolder(req, res, next)
     )
+    this.router.post(
+      '/file/share',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .shareFile(req, res, next)
+    );
+    this.router.put(
+      '/file/share',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .unShareFile(req, res, next)
+    );
+    this.router.post(
+      '/folder/share',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .shareFolder(req, res, next)
+    );
+    this.router.put(
+      '/folder/share',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .unShareFolder(req, res, next)
+    );
+    this.router.get(
+      '/users',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .getUsersToShare(req, res, next)
+    );
     
   }
 }

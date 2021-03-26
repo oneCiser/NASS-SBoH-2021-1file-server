@@ -1,5 +1,5 @@
 /* eslint-disable class-methods-use-this */
-import {  IUser, IFile } from '../interfaces';
+import {  IUser, IFile, IShare, IAccessUser } from '../interfaces';
 import { ResourceUserRepository } from '../repository';
 import { ResourceUser } from '../models';
 import {findInArray} from '../utils';
@@ -94,6 +94,38 @@ class ResourceService  {
   async renameFolder(_idUser:string, oldFolder:string, newFolder:string): Promise<boolean>{
     return await ResourceUserRepository.renameFolder(_idUser, oldFolder, newFolder);
   }
+  async shareFile(_idUser_out: string, _idUser_in: string, _idFile:string, write:boolean):Promise<boolean>{
+    return await ResourceUserRepository.shareFile(_idUser_out, _idUser_in, _idFile, write);
+  }
+  async unShareFile(_idUser_out: string, _idUser_in: string, _idFile:string):Promise<boolean>{
+    return await ResourceUserRepository.unShareFile(_idUser_out, _idUser_in, _idFile);
+  }
+  async shareFolder(_idUser_out: string, _idUser_in: string, files:string[], write:boolean):Promise<boolean>{
+    try {
+      
+      files.forEach(async (element) => {
+        await ResourceUserRepository.shareFile(_idUser_out, _idUser_in, element, write);
+      });
+      return true;
+    } catch (error) {
+      return false
+    }
+  }
+  async unShareFolder(_idUser_out: string, _idUser_in: string, files:string[]):Promise<boolean>{
+    try {
+      
+      files.forEach(async (element) => {
+        await ResourceUserRepository.unShareFile(_idUser_out, _idUser_in, element);
+      });
+      return true;
+    } catch (error) {
+      return false
+    }
+  }
+  async getUsersToShare(_idUser:string): Promise<IAccessUser[]> {
+    return await ResourceUserRepository.getUsersToShare(_idUser);
+  }
+
   
 }
 

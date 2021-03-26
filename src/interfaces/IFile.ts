@@ -1,4 +1,5 @@
 import { Document } from 'mongoose';
+import IShare from './IShare';
 /**
  * Define a interface of resource to managament with mongoose
  * @category Interfaces
@@ -10,6 +11,6 @@ import { Document } from 'mongoose';
     url:string,
     size:number,
     modified:Date,
-    share:[]
+    share:IShare[]
 }
 export default IFile;

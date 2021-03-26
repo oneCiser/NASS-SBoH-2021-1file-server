@@ -4,6 +4,8 @@ import IRoute from './IRoute';
 import IFile from './IFile';
 import IUploadFile from './IUploadFile';
 import IPayLoad from './IPayLoad';
+import IShare from './IShare';
+import IAccessUser from './IAccessUser'
 
 export {
   // eslint-disable-next-line import/prefer-default-export
@@ -12,5 +14,7 @@ export {
   IRoute,
   IFile,
   IUploadFile,
-  IPayLoad
+  IPayLoad,
+  IShare,
+  IAccessUser
 };
