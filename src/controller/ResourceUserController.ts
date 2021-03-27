@@ -321,8 +321,8 @@ class ResourceUserController {
     try {
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
-      const {user_id, id_file, write} = req.body;
-      const shared = await ResourceService.shareFile(user._id, user_id, id_file, write);
+      const {username, id_file, write} = req.body;
+      const shared = await ResourceService.shareFile(user._id, username, id_file, write);
       res.json({shared});
     } catch (error) {
       return next(new HttpException(error.status || 500, error.message));

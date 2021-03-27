@@ -158,9 +158,9 @@ class ResourceUserRepository{
       }
       return false;
     }
-    async shareFile(_idUser_out: string, _idUser_in: string, _idFile:string, write:boolean): Promise<boolean> {
+    async shareFile(_idUser_out: string, username: string, _idFile:string, write:boolean): Promise<boolean> {
       var user = await ResourceUser.findById(_idUser_out);
-      var userShared = await ResourceUser.findById(_idUser_in);
+      var userShared = await ResourceUser.findOne({username:username});
       
       if(user && userShared){
         var files = user.directory.filter((file) => {
@@ -172,18 +172,18 @@ class ResourceUserRepository{
           var share = files[0].share;
           var shared = false;
           share.forEach(element => {
-            if(element.user_id == _idUser_in){
+            if(element.user_id == username){
               element.write = write;
               shared = true;
             };
           });
           if(!shared) {
             share.push({
-              user_id:_idUser_in,
+              user_id:username,
               write:write
             });
             await ResourceUser.findOneAndUpdate( {
-              _id:_idUser_in,
+              _id:username,
               share_in:{$ne:_idUser_out}
             },{
               $push:{
@@ -208,15 +208,15 @@ class ResourceUserRepository{
       }
       return false;
     }
-    async unShareFile(_idUser_out: string, _idUser_in: string, _idFile:string): Promise<boolean> {
+    async unShareFile(_idUser_out: string, username: string, _idFile:string): Promise<boolean> {
       var user = await ResourceUser.findById(_idUser_out);
-      var userShared = await ResourceUser.findById(_idUser_in);
+      var userShared = await ResourceUser.findOne({username:username});
       
       if(user && userShared){
         var haveAnotherSharedFile = user.directory.find(file => {
           if(file._id == _idFile) return null;
           var find = file.share.find(element => {
-            if(element.user_id == _idUser_in) return element;
+            if(element.user_id == username) return element;
           })
           if(find) return file;
           return null;
@@ -228,11 +228,11 @@ class ResourceUserRepository{
         })
         if(files.length > 0){
           var share = files[0].share.filter(element => {
-            if(element.user_id != _idUser_in) return element
+            if(element.user_id != username) return element
           });
           console.log(haveAnotherSharedFile)
           if(!haveAnotherSharedFile){
-            await ResourceUser.findByIdAndUpdate( _idUser_in,{
+            await ResourceUser.findOneAndUpdate( {username:username},{
               $pull:{
                 share_in:{
                   $in:[_idUser_out]

@@ -94,28 +94,28 @@ class ResourceService  {
   async renameFolder(_idUser:string, oldFolder:string, newFolder:string): Promise<boolean>{
     return await ResourceUserRepository.renameFolder(_idUser, oldFolder, newFolder);
   }
-  async shareFile(_idUser_out: string, _idUser_in: string, _idFile:string, write:boolean):Promise<boolean>{
-    return await ResourceUserRepository.shareFile(_idUser_out, _idUser_in, _idFile, write);
+  async shareFile(_idUser_out: string, username: string, _idFile:string, write:boolean):Promise<boolean>{
+    return await ResourceUserRepository.shareFile(_idUser_out, username, _idFile, write);
   }
-  async unShareFile(_idUser_out: string, _idUser_in: string, _idFile:string):Promise<boolean>{
-    return await ResourceUserRepository.unShareFile(_idUser_out, _idUser_in, _idFile);
+  async unShareFile(_idUser_out: string, username: string, _idFile:string):Promise<boolean>{
+    return await ResourceUserRepository.unShareFile(_idUser_out, username, _idFile);
   }
-  async shareFolder(_idUser_out: string, _idUser_in: string, files:string[], write:boolean):Promise<boolean>{
+  async shareFolder(_idUser_out: string, username: string, files:string[], write:boolean):Promise<boolean>{
     try {
       
       files.forEach(async (element) => {
-        await ResourceUserRepository.shareFile(_idUser_out, _idUser_in, element, write);
+        await ResourceUserRepository.shareFile(_idUser_out, username, element, write);
       });
       return true;
     } catch (error) {
       return false
     }
   }
-  async unShareFolder(_idUser_out: string, _idUser_in: string, files:string[]):Promise<boolean>{
+  async unShareFolder(_idUser_out: string, username: string, files:string[]):Promise<boolean>{
     try {
       
       files.forEach(async (element) => {
-        await ResourceUserRepository.unShareFile(_idUser_out, _idUser_in, element);
+        await ResourceUserRepository.unShareFile(_idUser_out, username, element);
       });
       return true;
     } catch (error) {
