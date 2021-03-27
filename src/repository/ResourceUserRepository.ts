@@ -261,6 +261,7 @@ class ResourceUserRepository{
     }
     async getUsersToShare(_idUser:string): Promise<IAccessUser[]> {
       const users = await ResourceUser.find({_id:{$ne:_idUser},type_user:'CLIENT'});
+      console.log(users)
       const usersToShare = users.map(user => {
         return {
           username:<string>user.username,

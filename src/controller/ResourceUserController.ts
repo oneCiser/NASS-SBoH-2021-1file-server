@@ -365,7 +365,7 @@ class ResourceUserController {
     try {
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
-      const users = ResourceService.getUsersToShare(user._id);
+      const users = await ResourceService.getUsersToShare(user._id);
       if(!users) throw new HttpException(404, 'Not Found');
       res.json({users});
     } catch (error) {
