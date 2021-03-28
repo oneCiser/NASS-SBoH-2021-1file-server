@@ -339,28 +339,6 @@ class ResourceUserController {
       return next(new HttpException(error.status || 500, error.message));
     }
   }
-  public static async shareFolder(req: Request, res: Response, next: NextFunction){
-    try {
-      const token = <IPayLoad>req.user;
-      const user = <IUser>token.user;
-      const {username, files, write} = req.body;
-      const shared = await ResourceService.shareFolder(user._id, username, files, write);
-      res.json({shared});
-    } catch (error) {
-      return next(new HttpException(error.status || 500, error.message));
-    }
-  }
-  public static async unShareFolder(req: Request, res: Response, next: NextFunction){
-    try {
-      const token = <IPayLoad>req.user;
-      const user = <IUser>token.user;
-      const {username, files} = req.body;
-      const unShared = await ResourceService.unShareFolder(user._id, username, files);
-      res.json({unShared});
-    } catch (error) {
-      return next(new HttpException(error.status || 500, error.message));
-    }
-  }
   public static async getUsersToShare(req: Request, res: Response, next: NextFunction){
     try {
       const token = <IPayLoad>req.user;
