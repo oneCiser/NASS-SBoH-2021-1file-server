@@ -217,7 +217,7 @@ class ResourceUserController {
         res.type(getFile.mimetype)
         let file = await decryptFile(pathImg);
         let compressImg = await imagemin.buffer(file,{plugins:[imageminJpegtran(), imageminOptipng()]});
-        // let fileData = compressImg.toString('base64');
+        let fileData = compressImg.toString('base64');
         
         res.send(compressImg)
       }
