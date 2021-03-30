@@ -6,10 +6,13 @@ import { ResourceUser } from '../models';
 import { HttpException } from '../exceptions';
 import { ResourceService } from '../services';
 import {uploadFileMiddleware} from '../middlewares';
+import imagemin from 'imagemin';
+import imageminJpegtran from 'imagemin-jpegtran';
+import imageminOptipng from 'imagemin-optipng';
 import fs from 'fs';
 import path from 'path';
 import archiver from 'archiver';
-import {findInArray} from '../utils';
+import {findInArray , encryptBuffer, decryptBuffer, encryptAndSaveFile, decryptFile } from '../utils';
 import '../config/dotenv';
 import { error } from 'winston';
 import { compile } from 'morgan';
@@ -36,14 +39,14 @@ class ResourceUserController {
     
     try {
       
-      await uploadFileMiddleware(req, res);
+      // await uploadFileMiddleware(req, res);
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
-      const newFile:IFile = req.body;
-      const tmpPath = req.file.destination;
-      const {filename} = req.file;
-      newFile.name = filename;
+      let newFile:IFile =  req.body;
+      const {originalname} = req.file;
+      newFile.name = originalname;
       newFile.size = req.file.size;
+      newFile.mimetype = req.file.mimetype;
       const ifExistFile = findInArray(user.directory,newFile);
       let haveSpace = false;
       if(ifExistFile>-1){
@@ -53,24 +56,23 @@ class ResourceUserController {
       else{
         haveSpace = user.haveSpace(newFile.size);
       }
-      if(!haveSpace){
-        fs.unlinkSync(`${tmpPath}${filename}`);
-        throw new HttpException(400, 'Bad Request');
-      }
-      const realPath = `${process.env.FILE_STORAGE}/users/${user._id}/${newFile.url}/`;
+      if(!haveSpace) throw new HttpException(400, 'Bad Request');
+      let realPath = `${process.env.FILE_STORAGE}/users/${user._id}/${newFile.url}/`;
+      
+      if(newFile.url == "") realPath = `${process.env.FILE_STORAGE}/users/${user._id}/`;
+      console.log(realPath)
       const pathExist = fs.existsSync(realPath);
       if(!pathExist) fs.mkdirSync(realPath , {recursive:true});
-      fs.rename(`${tmpPath}${filename}`,`${realPath}${filename}`,(error) => {
-        if(error) throw new HttpException(400, 'Bad Request');
-      });
-      if(!newFile) throw new HttpException(400, 'Bad Request');
+      const fileBufferEncrypt = await encryptAndSaveFile(req.file.buffer, `${realPath}${newFile.name}`);
+
+      if(!newFile || !fileBufferEncrypt) throw new HttpException(400, 'Bad Request');
       newFile.modified = new Date(Date.now());
       const saveFile = await ResourceService.uploadFile(<string>user.username,newFile);
       if(!saveFile) {
-        fs.unlinkSync(`${realPath}${filename}`);
+        fs.unlinkSync(`${realPath}${newFile.name}`);
         throw new HttpException(404, 'Not Found');
       }
-      console.log(saveFile)
+      
       res.json(saveFile);
     } catch (error) {
       return next(new HttpException(error.status || 500, error.message));
@@ -177,13 +179,18 @@ class ResourceUserController {
       const user = <IUser>token.user;
       const id = req.params.id;
       
-      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+      // const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
-        const path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
-        res.download(path, getFile.name, (error) => {
-          if(error) throw new HttpException(404, 'Not Found');
-        });
+        let path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
+        if(getFile.url == "") path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
+        const bufferDecrypt = await decryptFile(path);
+        res.attachment(getFile.name).type(getFile.mimetype);
+        res.setHeader('Content-Length', bufferDecrypt.length);
+        res.send(bufferDecrypt)
+        // res.download(path, getFile.name, (error) => {
+        //   if(error) throw new HttpException(404, 'Not Found');
+        // });
       }
       else{
         throw new HttpException(404, 'Not Found');
@@ -205,13 +212,14 @@ class ResourceUserController {
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
-        const pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
-        var imgType = getFile.name.split('.');
-        res.type(imgType[imgType.length - 1])
-        var file = fs.createReadStream(pathImg,{encoding: 'base64'})
-        // var absolutePath = path.resolve(pathImg);
-        // res.sendFile(absolutePath);
-        file.pipe(res);
+        let pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
+        if(getFile.url == "") pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
+        res.type(getFile.mimetype)
+        let file = await decryptFile(pathImg);
+        let compressImg = await imagemin.buffer(file,{plugins:[imageminJpegtran(), imageminOptipng()]});
+        // let fileData = compressImg.toString('base64');
+        
+        res.send(compressImg)
       }
       else{
         throw new HttpException(404, 'Not Found');
@@ -266,14 +274,23 @@ class ResourceUserController {
       const {folder} = req.body
       var archive = archiver('zip');
       archive.on('error', function(err) {
+        console.log(err)
         throw new HttpException(500, 'Internal error');
       });
       archive.on('end', () => res.end());
-      var path = process.env.FILE_STORAGE+"/users/"+user._id+"/"+folder;
+      const path = process.env.FILE_STORAGE+"/users/"+user._id+"/";
       res.attachment(`${folder}.zip`).type('zip');
-      var existFolder = fs.existsSync(path);
-      if(!existFolder) throw new HttpException(404, 'Not Found');
-      archive.directory(path,false);
+      const existFolder = fs.existsSync(path+folder);
+      const folderFiles = await ResourceService.getFileByFolder(user._id, folder);
+      if(!existFolder || !folderFiles) throw new HttpException(404, 'Not Found');
+      for (let index = 0; index < folderFiles.length; index++) {
+        let file = folderFiles[index];
+        let filePath = `${file.url}/${file.name}`;
+        if(file.url == "") filePath = `${file.name}`;
+        let bufferFileDecrypt = await decryptFile(`${path}${filePath}`);
+        console.log(bufferFileDecrypt)
+        archive.append(bufferFileDecrypt,{ name: filePath })
+      }
       archive.pipe(res);
       archive.finalize();
     } catch (error) {

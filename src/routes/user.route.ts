@@ -4,7 +4,8 @@ import {
 import passport from 'passport';
 import { IRoute } from '../interfaces';
 import { ResourceUserControler } from '../controller';
-import { isDefinedParamMiddleware, validationMiddleware } from '../middlewares';
+// import {uploadFileMiddleware } from '../middlewares';
+import multer from 'multer';
 import { UserDTO } from '../dtos';
 
 /**
@@ -26,8 +27,8 @@ class ExampleRouter implements IRoute {
   createRoutes(): void {
     this.router.post(
       '/upload',
-      (req: Request, res: Response, next: NextFunction) => {console.log(req);next()},
       passport.authenticate('jwt',{session:false}),
+      multer().single('file'),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
         .uploadFile(req, res, next),
     );

@@ -94,6 +94,9 @@ class ResourceService  {
   async renameFolder(_idUser:string, oldFolder:string, newFolder:string): Promise<boolean>{
     return await ResourceUserRepository.renameFolder(_idUser, oldFolder, newFolder);
   }
+  async getFileByFolder(_idUser:string, folder:string): Promise<IFile[] | null> {
+    return await ResourceUserRepository.getFileByFolder(_idUser, folder);
+  }
   async shareFile(_idUser_out: string, username: string, _idFile:string, write:boolean):Promise<boolean>{
     return await ResourceUserRepository.shareFile(_idUser_out, username, _idFile, write);
   }

@@ -5,6 +5,7 @@ const FileSchema: Schema<IFile> = new Schema({
   name: {type:String, required:true},
   url: {type:String, required:true},
   size: {type:Number, required:true},
+  mimetype: {type:String, required:false},
   modified: {type:Date, default:Date.now},
   share:{type:[],required:false}
 })

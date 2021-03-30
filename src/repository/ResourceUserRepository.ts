@@ -51,7 +51,8 @@ class ResourceUserRepository{
    * @memberof ResourceRepository
    */
     async newFile(user:IUser, file: IFile): Promise<IFile | null> {
-      if(user._id && file.name && file.url && file.size){
+      console.log(file)
+      if(user._id && file.name && (file.url || file.url == "") && file.size){
         await ResourceUser.findByIdAndUpdate(user._id,{
           $push:{
             directory:file
@@ -157,6 +158,19 @@ class ResourceUserRepository{
         return true;
       }
       return false;
+    }
+    async getFileByFolder(_idUser:string, folder:string): Promise<IFile[] | null> {
+      var user = await ResourceUser.findById(_idUser);
+      var regex = new RegExp(`^${folder}`,'i');
+      if(user){
+        const folderFiles = user.directory.filter((file) => {
+          if(file.url.match(regex)){
+            return file
+          }
+        });
+        return folderFiles
+      }
+      return null;
     }
     async shareFile(_idUser_out: string, username: string, _idFile:string, write:boolean): Promise<boolean> {
       var user = await ResourceUser.findById(_idUser_out);

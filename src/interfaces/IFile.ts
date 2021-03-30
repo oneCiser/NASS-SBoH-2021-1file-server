@@ -11,6 +11,7 @@ import IShare from './IShare';
     url:string,
     size:number,
     modified:Date,
+    mimetype:string,
     share:IShare[]
 }
 export default IFile;
