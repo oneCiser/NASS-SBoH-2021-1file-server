@@ -219,7 +219,7 @@ class ResourceUserController {
         let compressImg = await imagemin.buffer(file,{plugins:[imageminJpegtran(), imageminOptipng()]});
         let fileData = compressImg.toString('base64');
         
-        res.send(compressImg)
+        res.send(fileData)
       }
       else{
         throw new HttpException(404, 'Not Found');
