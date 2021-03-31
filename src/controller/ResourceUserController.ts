@@ -298,7 +298,7 @@ class ResourceUserController {
           return {
             name:video.name,
             modified:video.modified,
-            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/video/'+video._id
+            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/loadvideo/'+video._id
           };
         });
 
@@ -330,7 +330,7 @@ class ResourceUserController {
         const videoSize =videoPath.length;
         //console.log(videoSize)
         
-        const CHUNK_SIZE = 10 ** 6; // 1MB
+        const CHUNK_SIZE = 10 ** 5; // 0.1MB
         const start = Number(range.replace(/\D/g, "")); // warnign si no espeficia el rango se puede romper
         //console.log(start)
         const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
