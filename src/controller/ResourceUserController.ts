@@ -308,7 +308,7 @@ class ResourceUserController {
       }
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl; //devuelve la url que consulto acá
       const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
-      if(getFile){
+      if(getFile && range){
         let pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;//fichero que contiene el video
         if(getFile.url == "") pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
         let file = await decryptFile(pathVideo);
