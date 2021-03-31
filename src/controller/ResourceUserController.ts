@@ -191,7 +191,8 @@ class ResourceUserController {
       // const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
-        res.attachment(`${getFile.name}.zip`).type('zip');
+        const realName = getFile.name.split('.');
+        res.attachment(`${realName[0]}.zip`).type('zip');
         let path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
         if(getFile.url == "") path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
         const bufferDecrypt = await decryptFile(path);
