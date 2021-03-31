@@ -178,16 +178,29 @@ class ResourceUserController {
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
       const id = req.params.id;
+      var archive = archiver('zip',{
+        zlib: { level: 9 } // Sets the compression level.
+      });
+      archive.on('error', function(err) {
+        console.log(err)
+        throw new HttpException(500, 'Internal error');
+      });
+      archive.on('end', () => res.end());
+      const path = process.env.FILE_STORAGE+"/users/"+user._id+"/";
       
       // const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
       const getFile = await ResourceService.getFileById(user._id, id);
       if(getFile){
+        res.attachment(`${getFile.name}.zip`).type('zip');
         let path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;
         if(getFile.url == "") path = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
         const bufferDecrypt = await decryptFile(path);
-        res.attachment(getFile.name).type(getFile.mimetype);
-        res.setHeader('Content-Length', bufferDecrypt.length);
-        res.send(bufferDecrypt)
+        // res.attachment(getFile.name).type(getFile.mimetype);
+        // res.setHeader('Content-Length', bufferDecrypt.length);
+        // res.send(bufferDecrypt)
+        archive.append(bufferDecrypt,{ name: getFile.name})
+        archive.pipe(res);
+        archive.finalize();
         // res.download(path, getFile.name, (error) => {
         //   if(error) throw new HttpException(404, 'Not Found');
         // });
@@ -304,7 +317,7 @@ class ResourceUserController {
       const id = req.params.id; // recupero el id
       const range = req.headers.range; //paso el rango
       if (!range) {
-        res.status(400).send("Requires Range header");
+        throw new HttpException(400, 'Require range');
       }
       const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl; //devuelve la url que consulto acá
       const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
@@ -334,6 +347,9 @@ class ResourceUserController {
         //res.write(file.slice(start, end))
         res.end(file.slice(start, end))
       }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
     }catch(error) {
       return next(new HttpException(error.status || 500, error.message));
 
@@ -344,7 +360,9 @@ class ResourceUserController {
       const token = <IPayLoad>req.user;
       const user = <IUser>token.user;
       const {folder} = req.body
-      var archive = archiver('zip');
+      var archive = archiver('zip',{
+        zlib: { level: 9 } // Sets the compression level.
+      });
       archive.on('error', function(err) {
         console.log(err)
         throw new HttpException(500, 'Internal error');
