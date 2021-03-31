@@ -266,7 +266,79 @@ class ResourceUserController {
       return next(new HttpException(error.status || 500, error.message));
     }
   }
+  public static async getVideos(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const files = await ResourceService.getFiles(user._id);
+      const str = /^.*\.(ogg|mp4|webm)$/;
+      if(files){
+        const arrayFiles = files.filter(videos => {
+          let match = str.test(videos.name);
+          if(match){
+            return videos
+          }
+        });
+        
+        const videos = arrayFiles.map(video => {
+          return {
+            name:video.name,
+            modified:video.modified,
+            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/video/'+video._id
+          };
+        });
 
+        res.json({videos});
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async loadVideo(req: Request, res: Response, next: NextFunction){
+    try{
+      const token = <IPayLoad>req.user;// paso el token
+      const user = <IUser>token.user; // recupero el usuario
+      const id = req.params.id; // recupero el id
+      const range = req.headers.range; //paso el rango
+      if (!range) {
+        res.status(400).send("Requires Range header");
+      }
+      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl; //devuelve la url que consulto acá
+      const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
+      if(getFile){
+        let pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;//fichero que contiene el video
+        if(getFile.url == "") pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
+        let file = await decryptFile(pathVideo);
+        const videoPath = file;
+        const videoSize =videoPath.length;
+        //console.log(videoSize)
+        
+        const CHUNK_SIZE = 10 ** 6; // 1MB
+        const start = Number(range.replace(/\D/g, "")); // warnign si no espeficia el rango se puede romper
+        //console.log(start)
+        const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+        //console.log(end)
+        const contentLength = end - start + 1;
+        const headers = {
+          "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": contentLength,
+          "Content-Type": "video/mp4",
+        };
+
+        //console.log(file.slice(start, end))
+        res.writeHead(206, headers);
+        //res.write(file.slice(start, end))
+        res.end(file.slice(start, end))
+      }
+    }catch(error) {
+      return next(new HttpException(error.status || 500, error.message));
+
+    }
+  }
   public static async downloadFolder(req: Request, res: Response, next: NextFunction){
     try {
       const token = <IPayLoad>req.user;
