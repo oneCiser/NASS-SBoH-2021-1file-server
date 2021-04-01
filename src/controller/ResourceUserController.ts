@@ -10,7 +10,8 @@ import {uploadFileMiddleware} from '../middlewares';
 import imagemin from 'imagemin';
 import imageminJpegtran from 'imagemin-jpegtran';
 import imageminOptipng from 'imagemin-optipng';
-import fs from 'fs';
+import fs, {createReadStream} from 'fs';
+import {createDecipheriv} from "crypto"
 import path from 'path';
 import archiver from 'archiver';
 import {findInArray , encryptBuffer, decryptBuffer, encryptAndSaveFile, decryptFile } from '../utils';
@@ -314,10 +315,13 @@ class ResourceUserController {
   }
   public static async loadVideo(req: Request, res: Response, next: NextFunction){
     try{
-      const token = <IPayLoad>req.user;// paso el token
-      const user = <IUser>token.user; // recupero el usuario
+      // const token = <IPayLoad>req.user;// paso el token
+      // const user = <IUser>token.user; // recupero el usuario
       const id = req.params.id; // recupero el id
       const range = req.headers.range; //paso el rango
+      const user = {
+        _id:"604305a999536a12341a54cd"
+      }
       if (!range) {
         throw new HttpException(400, 'Require range');
       }
@@ -336,19 +340,23 @@ class ResourceUserController {
         
         //console.log(start)
         const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+        const decipher = createDecipheriv('aes-256-cbc', Buffer.from("8BZ3pCTp71LX5I//QsBYdz7w4JHXNVehSBXuXnScdqg=", "base64"), Buffer.from("AAAAAAAAAAAAAAAAAAAAAA==", "base64"));
         //console.log(end)
         const contentLength = end - start ;
-        const headers = {
-          "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-          "Accept-Ranges": "bytes",
-          "Content-Length": contentLength,
-          "Content-Type": "video/mp4",
-        };
+        // const headers = {
+        //   "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+        //   "Accept-Ranges": "bytes",
+        //   "Content-Length": contentLength,
+        //   "Content-Type": "video/mp4",
+        // };
 
         //console.log(file.slice(start, end))
-        res.writeHead(206, headers);
+        // console.log('Ranges', range)
+        // res.writeHead(206, headers);
         //res.write(file.slice(start, end))
-        res.end(file.slice(start, end))
+        // res.write(file.slice(start, end))
+        const input = createReadStream(pathVideo);
+        input.pipe(decipher).pipe(res);
       }
       else{
         throw new HttpException(404, 'Not Found');
