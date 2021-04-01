@@ -322,7 +322,7 @@ class ResourceUserController {
       const id = req.params.id; // recupero el id
       const range = req.headers.range; //paso el rango
       const user = {
-        _id:req.params.ud
+        _id:"604305a999536a12341a54cd"
       }
       
       const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
