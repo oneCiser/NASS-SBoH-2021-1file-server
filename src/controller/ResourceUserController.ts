@@ -346,7 +346,7 @@ class ResourceUserController {
         };
 
         //console.log(file.slice(start, end))
-        res.writeHead(200, headers);
+        res.writeHead(206, headers);
         //res.write(file.slice(start, end))
         res.end(file.slice(start, end))
       }
