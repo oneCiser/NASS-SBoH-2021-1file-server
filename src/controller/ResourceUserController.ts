@@ -322,7 +322,7 @@ class ResourceUserController {
       const id = req.params.id; // recupero el id
       const range = req.headers.range; //paso el rango
       const user = {
-        _id:"604305a999536a12341a54cd"
+        _id:req.params.ud//"604305a999536a12341a54cd"
       }
       
       const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
@@ -344,7 +344,7 @@ class ResourceUserController {
           }
           else{
             const end = Math.min(start + CHUNK_SIZE, videoSize - 1); // End de los bytes
-            const contentLength = end - start + 1 ; // Largo del contenido
+            const contentLength = end - start  ; // Largo del contenido
             //Cabeceras del request
             const headers = {
               "Content-Range": `bytes ${start}-${end}/${videoSize}`,
