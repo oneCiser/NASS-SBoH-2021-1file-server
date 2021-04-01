@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable class-methods-use-this */
 import { NextFunction, Response, Request, json } from 'express';
+import {pipeline} from 'stream';
 import { IUser, IFile, IUploadFile, IPayLoad } from '../interfaces';
 import { ResourceUser } from '../models';
 import { HttpException } from '../exceptions';
@@ -327,15 +328,16 @@ class ResourceUserController {
         if(getFile.url == "") pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
         let file = await decryptFile(pathVideo);
         const videoPath = file;
-        const videoSize =videoPath.length;
+        const videoSize = videoPath.length;
         //console.log(videoSize)
         
         const CHUNK_SIZE = 10 ** 5; // 0.1MB
         const start = Number(range.replace(/\D/g, "")); // warnign si no espeficia el rango se puede romper
+        
         //console.log(start)
         const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
         //console.log(end)
-        const contentLength = end - start + 1;
+        const contentLength = end - start ;
         const headers = {
           "Content-Range": `bytes ${start}-${end}/${videoSize}`,
           "Accept-Ranges": "bytes",
@@ -344,7 +346,7 @@ class ResourceUserController {
         };
 
         //console.log(file.slice(start, end))
-        res.writeHead(206, headers);
+        res.writeHead(200, headers);
         //res.write(file.slice(start, end))
         res.end(file.slice(start, end))
       }
