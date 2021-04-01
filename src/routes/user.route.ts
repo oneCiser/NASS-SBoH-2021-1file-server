@@ -81,7 +81,7 @@ class ExampleRouter implements IRoute {
       .getVideos(req, res, next)
     );
     this.router.get(
-      `/loadvideo${this.pathIdParam}`,
+      `/loadvideo/:id/:ud`,
       // passport.authenticate('jwt',{session:false}),
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
       .loadVideo(req, res, next)

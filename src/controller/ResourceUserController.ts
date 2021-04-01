@@ -11,6 +11,7 @@ import imagemin from 'imagemin';
 import imageminJpegtran from 'imagemin-jpegtran';
 import imageminOptipng from 'imagemin-optipng';
 import fs, {createReadStream} from 'fs';
+import { Readable } from 'stream'
 import {createDecipheriv} from "crypto"
 import path from 'path';
 import archiver from 'archiver';
@@ -317,46 +318,58 @@ class ResourceUserController {
     try{
       // const token = <IPayLoad>req.user;// paso el token
       // const user = <IUser>token.user; // recupero el usuario
+      console.log(req.params)
       const id = req.params.id; // recupero el id
       const range = req.headers.range; //paso el rango
       const user = {
-        _id:"604305a999536a12341a54cd"
+        _id:req.params.ud
       }
-      if (!range) {
-        throw new HttpException(400, 'Require range');
-      }
-      const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl; //devuelve la url que consulto acá
+      
       const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
-      if(getFile && range){
+      if(getFile){
         let pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;//fichero que contiene el video
         if(getFile.url == "") pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
-        let file = await decryptFile(pathVideo);
-        const videoPath = file;
-        const videoSize = videoPath.length;
-        //console.log(videoSize)
-        
-        const CHUNK_SIZE = 10 ** 5; // 0.1MB
-        const start = Number(range.replace(/\D/g, "")); // warnign si no espeficia el rango se puede romper
-        
-        //console.log(start)
-        const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-        const decipher = createDecipheriv('aes-256-cbc', Buffer.from("8BZ3pCTp71LX5I//QsBYdz7w4JHXNVehSBXuXnScdqg=", "base64"), Buffer.from("AAAAAAAAAAAAAAAAAAAAAA==", "base64"));
-        //console.log(end)
-        const contentLength = end - start ;
-        // const headers = {
-        //   "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-        //   "Accept-Ranges": "bytes",
-        //   "Content-Length": contentLength,
-        //   "Content-Type": "video/mp4",
-        // };
-
-        //console.log(file.slice(start, end))
-        // console.log('Ranges', range)
-        // res.writeHead(206, headers);
-        //res.write(file.slice(start, end))
-        // res.write(file.slice(start, end))
-        const input = createReadStream(pathVideo);
-        input.pipe(decipher).pipe(res);
+        let file = await decryptFile(pathVideo);// Se desifra el archivo completo
+        const videoPath = file; //Buffer del archivo descifrado
+        const videoSize = videoPath.length;// Tamaño del buffer en bytes
+        //Si no manda rango se le envia todo el archivo
+        if(!range){
+          res.send(file);
+        }
+        else{
+          const CHUNK_SIZE = 10 ** 6; // 1MB
+          const start = Number(range.replace(/\D/g, "")); // Inicio de cada rango
+          if(start >= videoSize - 1) {
+            res.send(file);
+          }
+          else{
+            const end = Math.min(start + CHUNK_SIZE, videoSize - 1); // End de los bytes
+            const contentLength = end - start + 1 ; // Largo del contenido
+            //Cabeceras del request
+            const headers = {
+              "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+              "Accept-Ranges": "bytes",
+              "Content-Length": contentLength,
+              "Content-Type": "video/mp4",
+            };
+            // console.log(headers)
+            //console.log(file.slice(start, end))
+            // console.log('Ranges', range)
+            //Se crea un stream redable
+            const readable = new Readable();
+            readable._read = () => {} // _read is required but you can noop it
+            //Se le pasa al stream el subchunk
+            readable.push(file.slice(start, end));
+            //Para cada stream es necesario que lo ultimo sea null
+            readable.push(null)
+            //Se pasan los headers a la cabecera
+            res.writeHead(206, headers);
+            //Se envia el res mediante el pipe del stream redable
+            readable.pipe(res);
+          }
+          
+          
+        }
       }
       else{
         throw new HttpException(404, 'Not Found');
