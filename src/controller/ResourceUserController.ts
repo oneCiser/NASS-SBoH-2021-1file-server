@@ -319,20 +319,25 @@ class ResourceUserController {
       const user = {
         _id:req.params.ud//"604305a999536a12341a54cd"
       }
-      
+      console.log('Antes de get file');
       const getFile = await ResourceService.getFileById(user._id, id); // traigo objeto que contiene el video
       if(getFile){
         let pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.url}/${getFile.name}`;//fichero que contiene el video
         if(getFile.url == "") pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
+        console.log('Antes de cargar el archivo');
+        
         let file = await decryptFile(pathVideo);// Se desifra el archivo completo
         const videoPath = file; //Buffer del archivo descifrado
         const videoSize = videoPath.length;// Tamaño del buffer en bytes
+        console.log('Despues de descifrar');
+        
         //Si no manda rango se le envia todo el archivo
         // const videoSize = fs.statSync(pathVideo).size;
         // const decipher = createDecipheriv('aes-256-cbc', Buffer.from("8BZ3pCTp71LX5I//QsBYdz7w4JHXNVehSBXuXnScdqg=", "base64"), Buffer.from("AAAAAAAAAAAAAAAAAAAAAA==", "base64"));
         
 
         if(!range){
+          console.log('No tiene rango');
           // res.send(file);
           const headers = {
             'Content-Length': videoSize,
@@ -371,6 +376,7 @@ class ResourceUserController {
             "Content-Length": contentLength,
             "Content-Type": "video/mp4",
           };
+          console.log('Antes del header');
           res.writeHead(206, headers);
           // const file = fs.createReadStream(pathVideo, {start, end})
           // file.pipe(decipher).pipe(res);
@@ -405,13 +411,17 @@ class ResourceUserController {
             const readable = new Readable();
             readable._read = () => {} // _read is required but you can noop it
             //Se le pasa al stream el subchunk
+            console.log('Antes de hacer pull al redable');
             readable.push(file.slice(start, end + 1));
             //Para cada stream es necesario que lo ultimo sea null
+            console.log('Set null');
             readable.push(null)
             //Se pasan los headers a la cabecera
             
             //Se envia el res mediante el pipe del stream redable
+            console.log('Antes del pipe');
             readable.pipe(res);
+            console.log('Despues del pipe');
           // }
           
           
