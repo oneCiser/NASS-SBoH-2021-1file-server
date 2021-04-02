@@ -296,7 +296,7 @@ class ResourceUserController {
           return {
             name:video.name,
             modified:video.modified,
-            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/loadvideo/'+video._id
+            url:req.protocol + '://' + process.env.API_GATEWAY + '/api/file/loadvideo/'+video._id+'/'+user._id
           };
         });
 
