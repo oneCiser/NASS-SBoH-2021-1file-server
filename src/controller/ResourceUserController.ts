@@ -231,7 +231,7 @@ class ResourceUserController {
         res.type(getFile.mimetype)
         let file = await decryptFile(pathImg);
         
-        res.send(file)
+        res.send(file.toString('base64'))
       }
       else{
         throw new HttpException(404, 'Not Found');
