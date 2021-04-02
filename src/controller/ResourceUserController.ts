@@ -7,9 +7,6 @@ import { ResourceUser } from '../models';
 import { HttpException } from '../exceptions';
 import { ResourceService } from '../services';
 import {uploadFileMiddleware} from '../middlewares';
-import imagemin from 'imagemin';
-import imageminJpegtran from 'imagemin-jpegtran';
-import imageminOptipng from 'imagemin-optipng';
 import fs, {createReadStream} from 'fs';
 import { Readable } from 'stream'
 import {createDecipheriv} from "crypto"
@@ -233,10 +230,8 @@ class ResourceUserController {
         if(getFile.url == "") pathImg = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
         res.type(getFile.mimetype)
         let file = await decryptFile(pathImg);
-        let compressImg = await imagemin.buffer(file,{plugins:[imageminJpegtran(), imageminOptipng()]});
-        let fileData = compressImg.toString('base64');
         
-        res.send(fileData)
+        res.send(file)
       }
       else{
         throw new HttpException(404, 'Not Found');
