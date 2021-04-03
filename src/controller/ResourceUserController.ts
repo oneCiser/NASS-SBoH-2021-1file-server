@@ -338,22 +338,8 @@ class ResourceUserController {
 
         if(!range){
           console.log('No tiene rango');
-          // res.send(file);
-          const headers = {
-            'Content-Length': videoSize,
-            'Content-Type': 'video/mp4',
-          }
-          res.writeHead(200, headers);
-          const readable = new Readable();
-          readable._read = () => {} // _read is required but you can noop it
-          //Se le pasa al stream el subchunk
-          readable.push(file);
-          //Para cada stream es necesario que lo ultimo sea null
-          readable.push(null)
-          //Se pasan los headers a la cabecera
+          res.send(file);
           
-          //Se envia el res mediante el pipe del stream redable
-          readable.pipe(res);
 
 
           // res.writeHead(200, headers)
@@ -378,51 +364,21 @@ class ResourceUserController {
           };
           console.log('Antes del header');
           res.writeHead(206, headers);
-          // const file = fs.createReadStream(pathVideo, {start, end})
-          // file.pipe(decipher).pipe(res);
-          //End prueba
-
-
-          // const start = Number(range.replace(/\D/g, "")); // Inicio de cada rango
-          // const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-          // const contentLength = end - start +1 ;
-
-
-
-          // if(start >= videoSize - 1) {
-          //   res.send(file.slice(start, end));
-          //   console.log('End send')
-          // }
-          // else{
-            // console.log('Part contenent')
-            // // End de los bytes
-            //  // Largo del contenido
-            // //Cabeceras del request
-            // const headers = {
-            //   "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-            //   "Accept-Ranges": "bytes",
-            //   "Content-Length": contentLength,
-            //   "Content-Type": "video/mp4",
-            // };
-            // console.log(headers)
-            //console.log(file.slice(start, end))
-            // console.log('Ranges', range)
-            //Se crea un stream redable
-            const readable = new Readable();
-            readable._read = () => {} // _read is required but you can noop it
-            //Se le pasa al stream el subchunk
-            console.log('Antes de hacer pull al redable');
-            readable.push(file.slice(start, end + 1));
-            //Para cada stream es necesario que lo ultimo sea null
-            console.log('Set null');
-            readable.push(null)
-            //Se pasan los headers a la cabecera
-            
-            //Se envia el res mediante el pipe del stream redable
-            console.log('Antes del pipe');
-            readable.pipe(res);
-            console.log('Despues del pipe');
-          // }
+          const readable = new Readable();
+          readable._read = () => {} // _read is required but you can noop it
+          //Se le pasa al stream el subchunk
+          console.log('Antes de hacer pull al redable');
+          readable.push(file.slice(start, end + 1));
+          //Para cada stream es necesario que lo ultimo sea null
+          console.log('Set null');
+          readable.push(null)
+          //Se pasan los headers a la cabecera
+          
+          //Se envia el res mediante el pipe del stream redable
+          console.log('Antes del pipe');
+          readable.pipe(res);
+          console.log('Despues del pipe');
+    
           
           
         }
