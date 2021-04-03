@@ -326,7 +326,7 @@ class ResourceUserController {
         if(getFile.url == "") pathVideo = `${process.env.FILE_STORAGE}/users/${user._id}/${getFile.name}`;
         console.log('Antes de cargar el archivo');
         
-        let file = await decryptFile(pathVideo);// Se desifra el archivo completo
+        const file = await decryptFile(pathVideo);// Se desifra el archivo completo
         const videoPath = file; //Buffer del archivo descifrado
         const videoSize = videoPath.length;// Tamaño del buffer en bytes
         console.log('Despues de descifrar');
@@ -350,12 +350,10 @@ class ResourceUserController {
           const CHUNK_SIZE = 10 ** 6; // 1MB
 
           //Prueba
-          const parts = range.replace(/bytes=/, "").split("-")
-          const start = parseInt(parts[0], 10)
-          const end = parts[1] 
-            ? parseInt(parts[1], 10)
-            : videoSize-1
-          const contentLength = (end-start)+1
+          
+          const start = Number(range.replace(/\D/g, ""));
+          const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+          const contentLength = end - start + 1;
           const headers = {
             "Content-Range": `bytes ${start}-${end}/${videoSize}`,
             "Accept-Ranges": "bytes",
@@ -363,19 +361,16 @@ class ResourceUserController {
             "Content-Type": "video/mp4",
           };
           console.log('Antes del header');
-          res.writeHead(206, headers);
+          
           const readable = new Readable();
-          readable._read = () => {} // _read is required but you can noop it
-          //Se le pasa al stream el subchunk
+          readable._read = () => {};
           console.log('Antes de hacer pull al redable');
           readable.push(file.slice(start, end + 1));
-          //Para cada stream es necesario que lo ultimo sea null
           console.log('Set null');
-          readable.push(null)
-          //Se pasan los headers a la cabecera
-          
-          //Se envia el res mediante el pipe del stream redable
+          readable.push(null);
+
           console.log('Antes del pipe');
+          res.writeHead(206, headers);
           readable.pipe(res);
           console.log('Despues del pipe');
     
