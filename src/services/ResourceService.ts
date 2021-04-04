@@ -128,6 +128,9 @@ class ResourceService  {
   async getUsersToShare(_idUser:string): Promise<IAccessUser[]> {
     return await ResourceUserRepository.getUsersToShare(_idUser);
   }
+  async getSharedFiles(_idUser:string): Promise<any[] | null>{
+    return await ResourceUserRepository.getSharedFiles(_idUser);
+  }
 
   
 }

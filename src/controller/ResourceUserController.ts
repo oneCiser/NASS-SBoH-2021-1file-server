@@ -488,9 +488,121 @@ class ResourceUserController {
       return next(new HttpException(error.status || 500, error.message));
     }
   }
+  public static async getSharedFiles(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const sharedFiles = await ResourceService.getSharedFiles(user._id);
+      if(!sharedFiles) throw new HttpException(404, 'Not Found');
+      res.json({sharedFiles})
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
 
+  public static async downloadSharedFile(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const id = req.params.id;
+      const ud = req.params.ud
+      var archive = archiver('zip',{
+        zlib: { level: 9 } // Sets the compression level.
+      });
+      archive.on('error', function(err) {
+        console.log(err)
+        throw new HttpException(500, 'Internal error');
+      });
+      archive.on('end', () => res.end());
+      const userShared = await ResourceService.getByUsername(ud);
+      if(!userShared) throw new HttpException(404, 'Not Found');
+      const path = process.env.FILE_STORAGE+"/users/"+userShared?._id+"/";
+      
+      // const fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+      const getFile = await ResourceService.getFileById(userShared?._id, id);
+      if(getFile){
+        if(!getFile?.share.find(item => item.user_id == user.username)) throw new HttpException(404, 'Not Found');
+        const realName = getFile.name.split('.');
+        res.attachment(`${realName[0]}.zip`).type('zip');
+        let path = `${process.env.FILE_STORAGE}/users/${userShared?._id}/${getFile.url}/${getFile.name}`;
+        if(getFile.url == "") path = `${process.env.FILE_STORAGE}/users/${userShared?._id}/${getFile.name}`;
+        const bufferDecrypt = await decryptFile(path);
+        // res.attachment(getFile.name).type(getFile.mimetype);
+        // res.setHeader('Content-Length', bufferDecrypt.length);
+        // res.send(bufferDecrypt)
+        archive.append(bufferDecrypt,{ name: getFile.name})
+        archive.pipe(res);
+        archive.finalize();
+        // res.download(path, getFile.name, (error) => {
+        //   if(error) throw new HttpException(404, 'Not Found');
+        // });
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+    
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+    
+    
+  }
+  public static async removeSharedFileById(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const fileID = req.params.id
+      const userUd = req.params.ud
+      const userShared = await ResourceService.getByUsername(userUd)
+      const existFile = await ResourceService.getFileById(userShared?._id, fileID);
+      if(!existFile?.share.find(item => item.user_id == user.username)) throw new HttpException(404, 'Not Found');
+      const remove = await ResourceService.removeFileById(userShared?._id, fileID);
+      
+      if(existFile && remove){
+        const path = `${process.env.FILE_STORAGE}/users/${userShared?._id}/${existFile.url}/${existFile.name}`;
+        const existPath = fs.existsSync(path);
+        if(!existPath ) throw new HttpException(404, 'Not Found');
+        fs.unlink(path,(error) => {
+          if(error) throw new HttpException(404, 'Not Found');
+        });
+        res.json(existFile);
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+      
+      
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async renameSharedFile(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const fileToMove = req.body;
+      const userShared = await ResourceService.getByUsername(fileToMove.ud);
+      const oldFile = await ResourceService.getFileById(userShared?._id,fileToMove._id);
+      if(!oldFile) throw new HttpException(404, 'Not Found');
+      const oldPaht = `${process.env.FILE_STORAGE}/users/${user._id}/${oldFile.url}/`;
+      const updateFile = <IFile>{
+        _id:fileToMove._id,
+        url:oldFile.url,
+        name:oldFile.name
+      }
+      
+      const moveFile = await ResourceService.updateExistFile(user, updateFile);
+      if(!moveFile || !userShared) throw new HttpException(404, 'Not Found');
+      fs.rename(oldPaht,`${oldPaht}${fileToMove.name}`,(error) => {
+        if(error) throw new HttpException(400, 'Bad Request');
+      });
+      res.json(moveFile);
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
 
-
+    
+  }
 
 
   

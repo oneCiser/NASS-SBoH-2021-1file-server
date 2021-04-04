@@ -124,7 +124,30 @@ class ExampleRouter implements IRoute {
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
       .getUsersToShare(req, res, next)
     );
-    
+    this.router.get(
+      '/shared',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .getSharedFiles(req, res, next)
+    );
+    this.router.get(
+      '/shared/:ud/:id',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .downloadSharedFile(req, res, next)
+    );
+    this.router.delete(
+      '/shared/:ud/:id',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .removeSharedFileById(req, res, next)
+    );
+    this.router.put(
+      '/shared',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .renameSharedFile(req, res, next)
+    );
   }
 }
 export default new ExampleRouter().router;

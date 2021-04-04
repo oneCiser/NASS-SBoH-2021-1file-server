@@ -284,8 +284,42 @@ class ResourceUserRepository{
       return usersToShare;
     }
 
-    // async getSharedFiles(_idUser:string): Promise<IFile[] | null>{
-      
-    // }
+    async getSharedFiles(_idUser:string): Promise<any[] | null>{
+      const userToShare = await ResourceUser.findOne({_id:_idUser});
+      if(!userToShare || userToShare.share_in.length == 0) return null;
+      const users = await ResourceUser.find({_id:{
+        $in: userToShare.share_in
+      }});
+      const usersFiles = users.map((user, i) => {
+        const directory = user.directory.filter((file, j) => {
+          
+          
+          const sharedProperties = file.share.find(shared => shared.user_id == userToShare.username);
+          
+          if(sharedProperties){
+            
+            return file
+          }
+        });
+        const shareDirectory = directory.map((file, j) => {
+          const sharedProperties = file.share.find(shared => shared.user_id == userToShare.username);
+          return {
+            _id:file._id,
+            url:file.url,
+            name:file.name,
+            modified:file.modified,
+            size:file.size,
+            write:sharedProperties?.write
+          }
+        })
+        const saveUser = {
+          _id:user._id,
+          username:user.username,
+          directory: shareDirectory
+        };
+        return saveUser;
+      });
+      return usersFiles;
+    }
 }
 export default new ResourceUserRepository();
