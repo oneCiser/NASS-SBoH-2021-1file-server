@@ -588,7 +588,7 @@ class ResourceUserController {
       const updateFile = <IFile>{
         _id:fileToMove._id,
         url:oldFile.url,
-        name:oldFile.name
+        name:fileToMove.name
       }
       
       const moveFile = await ResourceService.updateExistFile(user, updateFile);
