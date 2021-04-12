@@ -604,6 +604,51 @@ class ResourceUserController {
     
   }
 
+  public static async syncUpload(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const file = <IFile>req.body
+      file.modified = new Date(Date.now());
+      const ifExistFile = findInArray(user.directory,file);
+      let haveSpace = false;
+      if(ifExistFile>-1){
+        const getExistFile = user.directory[ifExistFile];
+        haveSpace = user.haveSpace(Math.abs(file.size - getExistFile.size));
+      }
+      else{
+        haveSpace = user.haveSpace(file.size);
+      }
+      if(!haveSpace) throw new HttpException(400, 'Bad Request');
+      const saveFile = await ResourceService.uploadFile(<string>user.username,file);
+      if(!saveFile) throw new HttpException(400, 'Bad Request');
+      res.json(saveFile);
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+  public static async syncRemove(req: Request, res: Response, next: NextFunction){
+    try {
+      const token = <IPayLoad>req.user;
+      const user = <IUser>token.user;
+      const file = <IFile>req.body;
+      const existFile = await ResourceService.getFileNameAndPath(user._id, file.name, file.url);
+      if(existFile){
+        const remove = await ResourceService.removeFileById(user._id, existFile._id);
+        if(!remove) throw new HttpException(400, 'Bad Request');
+        res.json(existFile)
+      }
+      else{
+        throw new HttpException(404, 'Not Found');
+      }
+      
+      
+      
+    } catch (error) {
+      return next(new HttpException(error.status || 500, error.message));
+    }
+  }
+
 
   
 }

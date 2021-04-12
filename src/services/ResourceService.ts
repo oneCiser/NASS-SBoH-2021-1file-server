@@ -70,6 +70,10 @@ class ResourceService  {
   async getFileById(_idUser:string, _idFile:string): Promise<IFile | null> {
     return await ResourceUserRepository.getFileById(_idUser,_idFile);
   }
+
+  async getFileNameAndPath(_idUser:string, nameFile:string, pathFile:string): Promise<IFile | null>{
+    return await ResourceUserRepository.getFileNameAndPath(_idUser, nameFile, pathFile);
+  }
   /**
    * return all files of user
    * @param {String} _idUser id of user

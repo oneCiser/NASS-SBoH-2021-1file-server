@@ -148,6 +148,18 @@ class ExampleRouter implements IRoute {
       (req: Request, res: Response, next: NextFunction) => ResourceUserControler
       .renameSharedFile(req, res, next)
     );
+    this.router.post(
+      '/sync',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .syncUpload(req, res, next)
+    );
+    this.router.delete(
+      '/sync',
+      passport.authenticate('jwt',{session:false}),
+      (req: Request, res: Response, next: NextFunction) => ResourceUserControler
+      .syncRemove(req, res, next)
+    );
   }
 }
 export default new ExampleRouter().router;

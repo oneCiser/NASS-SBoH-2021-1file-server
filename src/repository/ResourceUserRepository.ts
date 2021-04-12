@@ -101,6 +101,13 @@ class ResourceUserRepository{
       }
       return null
     }
+    async getFileNameAndPath(_idUser:string, nameFile:string, pathFile:string): Promise<IFile | null>  {
+      const user = await ResourceUser.findById(_idUser);
+      if(user){
+        return user.directory.filter(file => file.name == nameFile && file.url == pathFile)[0];
+      }
+      return null
+    }
 
     async getFiles(_idUser:string): Promise<IFile[] | null> {
       const user = await ResourceUser.findById(_idUser);
