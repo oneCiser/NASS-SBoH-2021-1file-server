@@ -30,7 +30,9 @@ class ResourceUserRepository{
    * @memberof ResourceRepository
    */
    async staticUpdateFile(user:IUser,file: IFile): Promise<IFile | null> {
-    if (user._id && file.name && file.url){
+     
+    if (user._id && file.name && (file.url || file.url == "")){
+      
         await ResourceUser.findOneAndUpdate({
           _id:user._id,
           directory:{$elemMatch:{name:file.name, url:file.url}}
@@ -51,7 +53,7 @@ class ResourceUserRepository{
    * @memberof ResourceRepository
    */
     async newFile(user:IUser, file: IFile): Promise<IFile | null> {
-      console.log(file)
+      
       if(user._id && file.name && (file.url || file.url == "") && file.size){
         await ResourceUser.findByIdAndUpdate(user._id,{
           $push:{

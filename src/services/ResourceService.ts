@@ -38,6 +38,8 @@ class ResourceService  {
     if(user){
       if(!file) return null;
       const index = findInArray(user.directory,file);
+      
+      
       let updateUser = null
       if(index>-1){
         updateUser = await ResourceUserRepository.staticUpdateFile(user,file);

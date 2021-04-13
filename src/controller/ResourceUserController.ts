@@ -612,6 +612,8 @@ class ResourceUserController {
       file.modified = new Date(Date.now());
       const ifExistFile = findInArray(user.directory,file);
       let haveSpace = false;
+      
+      
       if(ifExistFile>-1){
         const getExistFile = user.directory[ifExistFile];
         haveSpace = user.haveSpace(Math.abs(file.size - getExistFile.size));
@@ -619,8 +621,13 @@ class ResourceUserController {
       else{
         haveSpace = user.haveSpace(file.size);
       }
+      
+      
+      
       if(!haveSpace) throw new HttpException(400, 'Bad Request');
       const saveFile = await ResourceService.uploadFile(<string>user.username,file);
+      
+      
       if(!saveFile) throw new HttpException(400, 'Bad Request');
       res.json(saveFile);
     } catch (error) {
